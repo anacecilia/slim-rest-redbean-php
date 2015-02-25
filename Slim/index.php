@@ -8,22 +8,35 @@ require 'RedBean/rb.php';
 
 // set up database connection
 R::setup('mysql:host=localhost;dbname=appdata','root','');
-R::freeze(true);
+R::freeze(true); //prevent anymore changes to repo from redbeans
 
 // initialize app
 $app = new \Slim\Slim();
 
-// handle GET requests for /articles
-$app->get('/articles', function () use ($app) {
-  // query database for all articles
-  $articles = R::find('articles');
+class ResourceNotFoundException extends Exception {}
 
-  // send response header for JSON content type
-  $app->response()->header('Content-Type', 'application/json');
+  // handle GET requests for /articles/:id
+  $app->get('/articles/:id', function ($id) use ($app) {    
+    try {
+      // query database for single article
+      $article = R::findOne('articles', 'id=?', array($id));
 
-  // return JSON-encoded response body with query results
-  echo json_encode(R::exportAll($articles));
-});
+      if ($article) {
+        // if found, return JSON response
+        $app->response()->header('Content-Type', 'application/json');
+        echo json_encode(R::exportAll($article));
+      } else {
+        // else throw exception
+        throw new ResourceNotFoundException();
+      }
+    } catch (ResourceNotFoundException $e) {
+      // return 404 server error
+      $app->response()->status(404);
+    } catch (Exception $e) {
+      $app->response()->status(400);
+      $app->response()->header('X-Status-Reason', $e->getMessage());
+    }
+  });
 
-// run
-$app->run();
+  // run
+  $app->run();
