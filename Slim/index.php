@@ -7,7 +7,7 @@ require 'RedBean/rb.php';
 \Slim\Slim::registerAutoloader();
 
 // set up database connection
-R::setup('mysql:host=localhost;dbname=appdata','root','pass');
+R::setup('mysql:host=localhost;dbname=appdata','root','');
 R::freeze(true);
 
 // initialize app
